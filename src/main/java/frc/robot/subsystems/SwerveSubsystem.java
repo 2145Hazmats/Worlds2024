@@ -428,6 +428,9 @@ public class SwerveSubsystem extends SubsystemBase {
     if (DriverStation.getAlliance().get() == DriverStation.Alliance.Red) { 
       allianceInverse = -1;}
       else {allianceInverse = 1;}
+    SmartDashboard.putNumber("RobotChasisSpeed X", getRobotVelocity().vxMetersPerSecond);
+    SmartDashboard.putNumber("RobotChasisSpeed Y", getRobotVelocity().vyMetersPerSecond);
+    SmartDashboard.putNumber("RobotChasisSpeed Rotation", getRobotVelocity().omegaRadiansPerSecond);
 /* 
     if (alliance.get() == DriverStation.Alliance.Red)
     {isRed = true;}

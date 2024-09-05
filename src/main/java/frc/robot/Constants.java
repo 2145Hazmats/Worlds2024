@@ -7,7 +7,7 @@ package frc.robot;
 public final class Constants {
   /* Constants for the swerve chassis */
   public static class SwerveConstants {
-    public static final double MAX_SPEED  = 5.4; // maximum m/s for the robot
+    public static final double MAX_SPEED  = 7; // maximum m/s for the robot
     public static final double PATHPLANNER_TRANS_KP = 1;
     public static final double LOOP_TIME  = 0.13; // in seconds, 20ms + 110ms spark max velocity lag
   }
