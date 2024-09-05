@@ -4,10 +4,14 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
+
 public final class Constants {
   /* Constants for the swerve chassis */
   public static class SwerveConstants {
-    public static final double MAX_SPEED  = 7; // maximum m/s for the robot
+    public static final double MAX_SPEED  = 5.4; // maximum m/s for the robot
     public static final double PATHPLANNER_TRANS_KP = 1;
     public static final double LOOP_TIME  = 0.13; // in seconds, 20ms + 110ms spark max velocity lag
   }
@@ -133,4 +137,12 @@ public final class Constants {
   }
   */
 
+  // Constants used for PhotonVision
+  public static class PhotonVisionConstants {
+    //Transform3d from the center of the robot to the camera mount position (ie, robot ➔ camera) in the Robot Coordinate System
+    public static final Transform3d ROBOT_TO_RIGHT_CAMERA =
+        new Transform3d(Units.inchesToMeters(0), 0, Units.inchesToMeters(0), new Rotation3d());
+    public static final Transform3d ROBOT_TO_LEFT_CAMERA =
+        new Transform3d(Units.inchesToMeters(0), 0, Units.inchesToMeters(0), new Rotation3d());
+  }
 }

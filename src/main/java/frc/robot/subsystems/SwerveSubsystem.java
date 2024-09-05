@@ -11,6 +11,8 @@ import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
 import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -21,15 +23,21 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
-import java.util.Optional;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+
+import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
+import org.photonvision.PhotonUtils;
+import org.photonvision.PhotonPoseEstimator.PoseStrategy;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveDriveConfiguration;
@@ -37,15 +45,50 @@ import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.Constants.PhotonVisionConstants;
 import frc.robot.Constants.SwerveConstants;
 
 
 public class SwerveSubsystem extends SubsystemBase {
   private final SwerveDrive swerveDrive;
 
-  //private Optional<Alliance> falliance = DriverStation.getAlliance();
+  // PhotonVision objects
+  private PhotonCamera rightCamera = new PhotonCamera("Arducam_OV9281_USB_Camera");
+  private PhotonCamera leftCamera = new PhotonCamera("Arducam_OV9281_USB_Camera_2");
+
+  private PhotonPipelineResult rightResult = null;
+  private PhotonPipelineResult leftResult = null;
+
+  private PhotonTrackedTarget rightTarget = null;
+  private PhotonTrackedTarget leftTarget = null;
+
+  // PhotonVision objects used in vision localization
+  private PhotonPoseEstimator rightPoseEstimator = new PhotonPoseEstimator(
+      AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo),
+      //Calculates a new robot position estimate by combining all visible tag corners.
+      //If using MULTI_TAG_PNP_ON_COPROCESSOR, must configure the AprilTagFieldLayout properly in the UI.
+      //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/multitag.html#multitag-localization
+      PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+      rightCamera,
+      PhotonVisionConstants.ROBOT_TO_RIGHT_CAMERA);
+
+  private PhotonPoseEstimator leftPoseEstimator = new PhotonPoseEstimator(
+      AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo),
+      //Calculates a new robot position estimate by combining all visible tag corners.
+      //If using MULTI_TAG_PNP_ON_COPROCESSOR, must configure the AprilTagFieldLayout properly in the UI.
+      //https://docs.photonvision.org/en/latest/docs/apriltag-pipelines/multitag.html#multitag-localization
+      PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+      leftCamera,
+      PhotonVisionConstants.ROBOT_TO_LEFT_CAMERA);
+
+  // latest EstimatedRobotPose from PhotonPoseEstimator
+  private EstimatedRobotPose rightLatestRobotPose = null;
+  private EstimatedRobotPose leftLatestRobotPose = null;
+
+  // Field to display on Shuffleboard
+  private final Field2d m_field = new Field2d();
+
   private double allianceInverse = 1;
-  //private boolean isRed;
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -61,13 +104,6 @@ public class SwerveSubsystem extends SubsystemBase {
     } catch (Exception e) { throw new RuntimeException(e); }
 
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via angle
-
-    /*if (allianceControl.isPresent()) {
-      if (allianceControl.get() == DriverStation.Alliance.Red) { allianceInverse = -1; }
-    }*/
-    /*if (DriverStation.getAlliance().get() == DriverStation.Alliance.Red) { 
-      allianceInverse = -1;}*/
-   //else {allianceInverse = 1;}
   }
 
 
@@ -417,26 +453,45 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
 
-  /* Add a fake vision reading for testing purposes */
-  public void addFakeVisionReading() {
-    swerveDrive.addVisionMeasurement(new Pose2d(3, 3, Rotation2d.fromDegrees(65)), Timer.getFPGATimestamp());
+  /* Add a vision measurement for localization */
+  public void addVisionPose2d(Pose2d visionPose2d, double timestampSeconds) {
+    swerveDrive.addVisionMeasurement(visionPose2d, timestampSeconds);
   }
 
 
   @Override
   public void periodic() {
-    if (DriverStation.getAlliance().get() == DriverStation.Alliance.Red) { 
-      allianceInverse = -1;}
-      else {allianceInverse = 1;}
+    // Get the latest camera results
+    rightResult = rightCamera.getLatestResult();
+    leftResult = leftCamera.getLatestResult();
+
+    // Try to update "latestRobotPose" with a new "EstimatedRobotPose" using a "PhotonPoseEstimator"
+    // If "latestRobotPose" is updated, call addVisionPose2d() and pass the updated "latestRobotPose" as an argument
+    try {
+      rightLatestRobotPose = rightPoseEstimator.update(rightResult).get();
+      addVisionPose2d(rightLatestRobotPose.estimatedPose.toPose2d(), rightLatestRobotPose.timestampSeconds);
+    } catch (Exception e) { // catch = catching an exception, java.util.Optional.get() throws NoSuchElementException if no value is present
+      rightLatestRobotPose = null; // If there is no updated "EstimatedRobotPose", update "latestRobotPose" to null
+    }
+
+    try {
+      leftLatestRobotPose = leftPoseEstimator.update(leftResult).get();
+      addVisionPose2d(leftLatestRobotPose.estimatedPose.toPose2d(), leftLatestRobotPose.timestampSeconds);
+    } catch (Exception e) { // catch = catching an exception, java.util.Optional.get() throws NoSuchElementException if no value is present
+      leftLatestRobotPose = null; // If there is no updated "EstimatedRobotPose", update "latestRobotPose" to null
+    }
+
+    // Update field for Shuffleboard
+    m_field.setRobotPose(swerveDrive.getPose());
+
+    if (DriverStation.getAlliance().get() == DriverStation.Alliance.Red) { allianceInverse = -1; }
+    else { allianceInverse = 1; }
     SmartDashboard.putNumber("RobotChasisSpeed X", getRobotVelocity().vxMetersPerSecond);
     SmartDashboard.putNumber("RobotChasisSpeed Y", getRobotVelocity().vyMetersPerSecond);
     SmartDashboard.putNumber("RobotChasisSpeed Rotation", getRobotVelocity().omegaRadiansPerSecond);
-/* 
-    if (alliance.get() == DriverStation.Alliance.Red)
-    {isRed = true;}
-    else {isRed = false;}
 
-    SmartDashboard.putBoolean("isREdteam", isRed);*/
+    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
+    SmartDashboard.putNumber("Match Number", DriverStation.getMatchNumber());
   }
 
 
