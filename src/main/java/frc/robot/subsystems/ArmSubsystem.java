@@ -168,6 +168,10 @@ public class ArmSubsystem extends SubsystemBase {
             break;
           case SOURCE:
             elbowAngle = ArmConstants.kSourceAngleSP[0];
+            wristAngle = 0.0;
+            break;
+          case SOURCE2:
+            elbowAngle = ArmConstants.kSourceAngleSP[0];
             wristAngle = ArmConstants.kSourceAngleSP[1];
             break;
           case FLOOR:
@@ -199,6 +203,14 @@ public class ArmSubsystem extends SubsystemBase {
             wristAngle = ArmConstants.kClimb2AngleSP[1];
             break;
           case SHOOT_HORIZONTAL:
+            elbowAngle = ArmConstants.kHorizontalAngleSP[0];
+            wristAngle = ArmConstants.kHorizontalAngleSP[1];
+            break;
+          case PASS_SHOT_1:
+            elbowAngle = ArmConstants.kPassShot1[0];
+            wristAngle = ArmConstants.kPassShot2[1];
+            break;
+          case PASS_SHOT_2:
             elbowAngle = ArmConstants.kHorizontalAngleSP[0];
             wristAngle = ArmConstants.kHorizontalAngleSP[1];
             break;

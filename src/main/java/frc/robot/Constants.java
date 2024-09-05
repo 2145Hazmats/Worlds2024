@@ -7,7 +7,7 @@ package frc.robot;
 public final class Constants {
   /* Constants for the swerve chassis */
   public static class SwerveConstants {
-    public static final double MAX_SPEED  = 5.4; // maximum m/s for the robot
+    public static final double MAX_SPEED  = 1000.0; // maximum m/s for the robot
     public static final double PATHPLANNER_TRANS_KP = 1;
     public static final double LOOP_TIME  = 0.13; // in seconds, 20ms + 110ms spark max velocity lag
   }
@@ -30,7 +30,7 @@ public final class Constants {
   /* Constants for the arm subsystem */
   public static class ArmConstants{
     // All of our PID Postions for the arm
-    public static enum ArmState {IDLE, FLOOR, SOURCE, AMP, SHOOT_SUB, SHOOT_N2, SHOOT_HORIZONTAL, CLIMB_1, CLIMB_2, TRAP, MANUAL};
+    public static enum ArmState {IDLE, FLOOR, SOURCE, SOURCE2, AMP, SHOOT_SUB, SHOOT_N2, SHOOT_HORIZONTAL, CLIMB_1, CLIMB_2, TRAP, MANUAL, PASS_SHOT_1, PASS_SHOT_2};
     // Motor IDs
     public static final int kElbowMotorLeaderID   = 20;
     public static final int kElbowMotorFollowerID = 21;
@@ -57,22 +57,22 @@ public final class Constants {
     //public static final double kElbowS = 0;
     public static final double kElbowG = 0;
     // Elbow offset. The angle should be 0 degrees when parallel
-    // TODO: SET THESE AFTER ENCODER FACTOR
     public static final double kElbowAngleOffset = 0.0;
     // Setpoints for the arm subsystem
     // {Elbow Angle, Wrist Angle} SP = SetPoint
-    // TODO: ALL THESE SETPOINTS NEED TO BE UPDATED AFTER ELBOW OFFSET
     public static final double[] kIdleAngleSP             = {-0.25, 0};
-    public static final double[] kFloorAngleSP            = {0, 35};
-    public static final double[] kSourceAngleSP           = {-48.95, 20.88 }; //-60.51, 21.57 -33.31, 9.285
+    public static final double[] kFloorAngleSP            = {0, 38};
+    public static final double[] kSourceAngleSP           = {-42.5, 15.5}; //-60.51, 21.57 -33.31, 9.285
     public static final double[] kAmpAngleSP              = {-115.44, 37.93}; //-113.7, 31.64
-    public static final double[] kSpeakerSubwooferAngleSP = {-9, 38}; //31.64
+    public static final double[] kSpeakerSubwooferAngleSP = {-9, 26}; //31.64 //CHANGE BACK TO 38 FOR WRIST
     public static final double[] kSpeakerN2AngleSP    = {0, 27}; // we need to ste these values to be not false
     public static final double[] kHorizontalAngleSP       = {-33.4, 28.5};
     public static final double[] kClimb1AngleSP           = {-98, 34};
     public static final double[] kClimb2AngleSP           = {-43.6, 71.1};
     public static final double[] kTrapAngleSP             = {-85, 51}; // Shoot Subwoofer with intake within bumper bounderies
-
+    public static final double[] kPassShot1             = {-85, 51};
+    public static final double[] kPassShot2             = {-85, 51};
+   
     public static final double kManualSpeed = 0.8;
   }
 
@@ -97,7 +97,7 @@ public final class Constants {
     // Shooter motor speeds
     public static final double kTopDefaultRPM    = 3000;
     public static final double kBottomDefaultRPM = 3000;
-    public static final double kTopSpeakerRPM    = 3000;
+    public static final double kTopSpeakerRPM    = 4000; //change back to 3k
     public static final double kBottomSpeakerRPM = 3000;
     public static final double kTopAmpRPM    = 1200;
     public static final double kBottomAmpRPM = 1200;

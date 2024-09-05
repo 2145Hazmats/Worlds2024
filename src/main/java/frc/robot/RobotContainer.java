@@ -131,13 +131,13 @@ public class RobotContainer {
       () -> -1,
       () -> 0
     ));
-    
+     */
     // Rotate away from the driver
     m_driverController.y().whileTrue(m_swerve.driveCommandPoint(() -> -m_driverController.getLeftY(), () -> -m_driverController.getLeftX(),
-      () -> 0,
-      () -> 1
+      () -> -.55,
+      () -> .91
     ));
-    */
+    
 
     // Resets the gyro
     m_driverController.back().onTrue(
@@ -167,8 +167,12 @@ public class RobotContainer {
         true
       )
     );
-
-
+//POTENTIAL ARM STATE ONE FOR PASS SHOT FROM SOURCE
+    m_driverController.a().whileTrue(
+        m_arm.setArmPIDCommand(ArmConstants.ArmState.SHOOT_SUB, true));
+//POTENTIAL 2 ARM STATE FOR SHOT FROM SOURCE
+    m_driverController.b().whileTrue(
+        m_arm.setArmPIDCommand(ArmConstants.ArmState.SHOOT_SUB, true));
     //Robot Centric DRIVING
 /*
     m_driverController.rightBumper().whileTrue(
@@ -295,14 +299,26 @@ m_driverController.rightBumper().whileTrue(
     );
 
     // Intake from the source
-    m_operatorController.povUp().whileTrue(
+    /*m_operatorController.povUp().whileTrue(
       Commands.sequence(
         Commands.parallel(
           m_arm.setArmPIDCommand(ArmConstants.ArmState.SOURCE, false),
           m_box.setIntakeMotorCommand(BoxConstants.kSourceIntakeSpeed)
         ).until(m_box::noteSensorTriggered)
       )
+    );*/
+
+    // Second intake from the source
+    m_operatorController.povUp().whileTrue(
+      Commands.sequence(
+        m_arm.setArmPIDCommand(ArmConstants.ArmState.SOURCE, true).withTimeout(0.5),
+        Commands.parallel(
+          m_arm.setArmPIDCommand(ArmConstants.ArmState.SOURCE2, false),
+          m_box.setIntakeMotorCommand(BoxConstants.kSourceIntakeSpeed)
+        ).until(m_box::noteSensorTriggered)
+      )
     );
+
     
     m_operatorController.povRight().whileTrue(
       Commands.parallel(
