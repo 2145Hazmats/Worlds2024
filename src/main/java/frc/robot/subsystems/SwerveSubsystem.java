@@ -12,6 +12,7 @@ import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -27,15 +28,23 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.io.File;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
+
+import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonUtils;
+import org.photonvision.targeting.PhotonPipelineResult;
+import org.photonvision.targeting.PhotonTrackedTarget;
+
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import frc.robot.Constants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.SwerveConstants;
 
@@ -46,6 +55,16 @@ public class SwerveSubsystem extends SubsystemBase {
   //private Optional<Alliance> falliance = DriverStation.getAlliance();
   private double allianceInverse = 1;
   //private boolean isRed;
+  private PhotonCamera rightCamera = new PhotonCamera("Right_Arducam_OV9281_USB_Camera");
+private PhotonCamera leftCamera = new PhotonCamera("Left_Arducam_OV9281_USD_Camera"); 
+
+  private PhotonPipelineResult rightResult = null;
+  private PhotonPipelineResult leftResult = null;
+
+  private PhotonTrackedTarget rightTarget = null;
+  private PhotonTrackedTarget leftTarget = null;
+
+  private PIDController anglecalculator =  new PIDController(Constants.SwerveConstants.P_Angle, Constants.SwerveConstants.I_Angle, Constants.SwerveConstants.D_Angle);
 
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
@@ -422,15 +441,92 @@ public class SwerveSubsystem extends SubsystemBase {
     swerveDrive.addVisionMeasurement(new Pose2d(3, 3, Rotation2d.fromDegrees(65)), Timer.getFPGATimestamp());
   }
 
+  public double VisionRotationSpeed() {
+    rightResult = rightCamera.getLatestResult();
+    leftResult = leftCamera.getLatestResult();
+
+    rightTarget = specificAprilTagID(rightResult, 7, 4);
+    leftTarget = specificAprilTagID(leftResult, 7, 4);
+
+    boolean rightHasTarget = false;
+    double RightAngleOffset = 0.0;
+    if (specificAprilTagID(rightResult, 7, 4) != null) {
+      rightHasTarget = true;
+      RightAngleOffset = rightTarget.getYaw();
+    } else {
+      rightHasTarget = false;
+    }
+
+    boolean leftHasTarget = false;
+    double LeftAngleOffset = 0.0;
+    if (specificAprilTagID(leftResult, 7, 4) != null) {
+      leftHasTarget = true;
+      LeftAngleOffset = leftTarget.getYaw();
+      SmartDashboard.putNumber("postStreamLeftTarget", leftTarget.getFiducialId());
+    } else {
+      leftHasTarget = false;
+    }
+
+    SmartDashboard.putBoolean("rightHasTarget", rightHasTarget);
+    SmartDashboard.putBoolean("leftHasTarget", leftHasTarget);
+
+    
+    double AngleSpeedCalculated;
+    if (rightHasTarget && leftHasTarget) {
+    double RealAngleOffset = RightAngleOffset + LeftAngleOffset;
+      AngleSpeedCalculated = anglecalculator.calculate(RealAngleOffset,0 );
+    }
+    else if (rightHasTarget) {
+      AngleSpeedCalculated = anglecalculator.calculate(RightAngleOffset, 0);
+    }
+    else {AngleSpeedCalculated = anglecalculator.calculate(LeftAngleOffset,0);
+    }
+    
+    double charzard = Math.signum(AngleSpeedCalculated);
+    AngleSpeedCalculated = AngleSpeedCalculated + (Constants.SwerveConstants.FF_Angle * charzard);
+    
+    if (charzard == 1) {
+      AngleSpeedCalculated = Math.min(AngleSpeedCalculated, Constants.SwerveConstants.MaxPIDAngle);
+    } else {
+      AngleSpeedCalculated = Math.max(AngleSpeedCalculated, -Constants.SwerveConstants.MaxPIDAngle);
+    }
+
+    SmartDashboard.putNumber("AngleSpeedCalculated", AngleSpeedCalculated);
+    return AngleSpeedCalculated;
+  }
+
+  /*VisionDistanceSpeed() {
+    PhotonUtils.calculateDistanceToTargetMeters(allianceInverse, allianceInverse, Units.degreesToRadians(30), allianceInverse)
+
+
+  }*/
+
+  public PhotonTrackedTarget specificAprilTagID(PhotonPipelineResult result, double id, double id2) {
+    if (result.hasTargets()) {
+      List<PhotonTrackedTarget> targets = result.getTargets();
+      Optional<PhotonTrackedTarget> specificTarget = targets.stream().filter(t -> (t.getFiducialId() == id || t.getFiducialId() == id2)).findFirst();
+      if (specificTarget.isPresent()) {
+        return specificTarget.get();
+      }
+    }
+    return null;
+  }
+
 
   @Override
   public void periodic() {
+     rightResult = rightCamera.getLatestResult();
+     leftResult = leftCamera.getLatestResult();
+
     if (DriverStation.getAlliance().get() == DriverStation.Alliance.Red) { 
       allianceInverse = -1;}
       else {allianceInverse = 1;}
-    SmartDashboard.putNumber("RobotChasisSpeed X", getRobotVelocity().vxMetersPerSecond);
-    SmartDashboard.putNumber("RobotChasisSpeed Y", getRobotVelocity().vyMetersPerSecond);
-    SmartDashboard.putNumber("RobotChasisSpeed Rotation", getRobotVelocity().omegaRadiansPerSecond);
+    SmartDashboard.putNumber("MatchTime", DriverStation.getMatchTime());
+    SmartDashboard.putBoolean("RightCameraActive", rightResult.hasTargets());
+    SmartDashboard.putBoolean("LeftCameraActive", leftResult.hasTargets());
+     
+    
+
 /* 
     if (alliance.get() == DriverStation.Alliance.Red)
     {isRed = true;}

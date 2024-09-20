@@ -168,6 +168,15 @@ public class RobotContainer {
       )
     );
 
+    m_driverController.a().whileTrue(
+      m_swerve.driveCommandAngularVelocity(
+        () -> -m_driverController.getLeftY(),
+        () -> -m_driverController.getLeftX(),
+        () -> m_swerve.VisionRotationSpeed(),
+        OperatorConstants.kMidModeSpeed, 
+        false
+      )
+    );
 
     //Robot Centric DRIVING
 /*

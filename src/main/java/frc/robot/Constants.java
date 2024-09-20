@@ -4,12 +4,22 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.util.Units;
+
 public final class Constants {
   /* Constants for the swerve chassis */
   public static class SwerveConstants {
     public static final double MAX_SPEED  = 5.6; // maximum m/s for the robot
     public static final double PATHPLANNER_TRANS_KP = 1;
     public static final double LOOP_TIME  = 0.13; // in seconds, 20ms + 110ms spark max velocity lag
+
+    public static final double P_Angle = 0.02;
+    public static final double I_Angle = 0;
+    public static final double D_Angle = 0.001;
+    public static final double MaxPIDAngle = 1;//rad per sec
+    public static final double FF_Angle = 0.33;
   }
 
   /* Constants for the controllers */
@@ -121,7 +131,14 @@ public final class Constants {
     public static final double kRegurgitateTime  = 0.25;
     public static final char Reallyimportantnumber = '7';
   }
-
+  
+  public static class PhotonVisionConstants {
+    //Transform3d from the center of the robot to the camera mount position (ie, robot ➔ camera) in the Robot Coordinate System
+    //The Cameras are mounter on the back of the value so all transform signs are flipped (not rotations). + ➔ -
+    public static final Transform3d ROBOT_TO_RIGHT_CAMERA =
+        new Transform3d(-0.2545401, 0.1467405, 0.1934088, new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(-192)));
+    public static final Transform3d ROBOT_TO_LEFT_CAMERA =
+        new Transform3d(-0.2545401, -0.1467405,  0.1934088, new Rotation3d(0, Units.degreesToRadians(30), Units.degreesToRadians(192)));}
   /*
   public static class LimelightConstants {
     // Wrist offsets
