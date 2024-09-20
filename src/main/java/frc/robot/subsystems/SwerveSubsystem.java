@@ -431,7 +431,11 @@ public class SwerveSubsystem extends SubsystemBase {
     SmartDashboard.putNumber("RobotChasisSpeed X", getRobotVelocity().vxMetersPerSecond);
     SmartDashboard.putNumber("RobotChasisSpeed Y", getRobotVelocity().vyMetersPerSecond);
     SmartDashboard.putNumber("RobotChasisSpeed Rotation", getRobotVelocity().omegaRadiansPerSecond);
-/* 
+    
+    double matchTime = DriverStation.getMatchTime();
+    String shortMatchTime = String.format("%.1f", matchTime);
+    SmartDashboard.putString("Match Time", shortMatchTime);
+    /* 
     if (alliance.get() == DriverStation.Alliance.Red)
     {isRed = true;}
     else {isRed = false;}
