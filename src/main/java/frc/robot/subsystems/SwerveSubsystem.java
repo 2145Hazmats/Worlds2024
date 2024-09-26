@@ -12,6 +12,7 @@ import com.pathplanner.lib.util.PIDConstants;
 import com.pathplanner.lib.util.ReplanningConfig;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -35,7 +36,9 @@ import swervelib.SwerveDrive;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
+import frc.robot.Constants;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import frc.robot.Constants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.SwerveConstants;
 
@@ -45,8 +48,9 @@ public class SwerveSubsystem extends SubsystemBase {
 
   //private Optional<Alliance> falliance = DriverStation.getAlliance();
   private double allianceInverse = 1;
-  //private boolean isRed;
 
+  //private boolean isRed;
+  private PIDController TurnToAnglePIDController = new PIDController(Constants.SwerveConstants.P_Angle, Constants.SwerveConstants.I_Angle, Constants.SwerveConstants.D_Angle);
   /**
    * Initialize {@link SwerveDrive} with the directory provided.
    *
@@ -420,6 +424,24 @@ public class SwerveSubsystem extends SubsystemBase {
   /* Add a fake vision reading for testing purposes */
   public void addFakeVisionReading() {
     swerveDrive.addVisionMeasurement(new Pose2d(3, 3, Rotation2d.fromDegrees(65)), Timer.getFPGATimestamp());
+  }
+
+  public double PIDturnToAngle(double RotationSetpointDegrees) {
+    double AngleSpeedCalculated = TurnToAnglePIDController.calculate(
+        getPose().getRotation().getDegrees(), RotationSetpointDegrees);//-180 - 180 degrees
+
+    double charzardSigmaDefinite = Math.signum(AngleSpeedCalculated);
+
+    //Charzard is = to -1 or 1 based on if the calculation is neg
+    AngleSpeedCalculated = AngleSpeedCalculated + (Constants.SwerveConstants.FF_Angle * charzardSigmaDefinite);
+    
+    if (charzardSigmaDefinite == 1) {
+      AngleSpeedCalculated = Math.min(AngleSpeedCalculated, Constants.SwerveConstants.MaxPIDAngle);
+    } else {
+      AngleSpeedCalculated = Math.max(AngleSpeedCalculated, -Constants.SwerveConstants.MaxPIDAngle);
+    }
+
+    return AngleSpeedCalculated;
   }
 
 

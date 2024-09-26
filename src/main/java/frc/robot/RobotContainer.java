@@ -113,7 +113,15 @@ public class RobotContainer {
 
   private void configureBindings() {
     /* Driver Controls */
-
+  m_driverController.a().whileTrue(
+      m_swerve.driveCommandAngularVelocity(
+        () -> -m_driverController.getLeftY(),
+        () -> -m_driverController.getLeftX(),
+        () -> m_swerve.PIDturnToAngle(0),
+        OperatorConstants.kMidModeSpeed, 
+        true
+      )
+    );
     // Rotate towards the driver
   /*  m_driverController.a().whileTrue(m_swerve.driveCommandPoint(() -> -m_driverController.getLeftY(), () -> -m_driverController.getLeftX(),
       () -> 0,
