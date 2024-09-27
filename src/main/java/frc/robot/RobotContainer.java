@@ -43,6 +43,8 @@ public class RobotContainer {
       new CommandXboxController(OperatorConstants.kDriverControllerPort);
   private final CommandXboxController m_operatorController =
       new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+  private final CommandXboxController m_memeController =
+      new CommandXboxController(OperatorConstants.kMemeControllerPort);
   
   //private double climbingSlowMode = 1.0;
   
@@ -118,6 +120,16 @@ public class RobotContainer {
         () -> -m_driverController.getLeftY(),
         () -> -m_driverController.getLeftX(),
         () -> m_swerve.PIDturnToAngle(0),
+        OperatorConstants.kMidModeSpeed, 
+        true
+      )
+    );
+
+    m_memeController.x().whileTrue(
+      m_swerve.driveCommandAngularVelocity(
+        () -> 1,
+        () -> 1,
+        () -> 1,
         OperatorConstants.kMidModeSpeed, 
         true
       )

@@ -22,6 +22,7 @@ public final class Constants {
   public static class OperatorConstants {
     public static final int kDriverControllerPort   = 0;
     public static final int kOperatorControllerPort = 1;
+    public static final int kMemeControllerPort = 5;
     /* Deadbands */
     public static final double LEFT_X_DEADBAND  = 0.04;
     public static final double LEFT_Y_DEADBAND  = 0.04;
@@ -36,7 +37,9 @@ public final class Constants {
   /* Constants for the arm subsystem */
   public static class ArmConstants{
     // All of our PID Postions for the arm
-    public static enum ArmState {IDLE, FLOOR, SOURCE, AMP, SHOOT_SUB, SHOOT_N2, SHOOT_HORIZONTAL, CLIMB_1, CLIMB_2, TRAP, MANUAL};
+    public static enum ArmState {IDLE, FLOOR, SOURCE, AMP, SHOOT_SUB, SHOOT_N2, SHOOT_HORIZONTAL, CLIMB_1, CLIMB_2, TRAP, PASS_SHOT, FORWARD_SIGMA_SHOT,MANUAL}; 
+    //Sigma shot refers to shooting at the subwoofer in the oppisite direction
+    
     // Motor IDs
     public static final int kElbowMotorLeaderID   = 20;
     public static final int kElbowMotorFollowerID = 21;
@@ -78,7 +81,8 @@ public final class Constants {
     public static final double[] kClimb1AngleSP           = {-98, 34};
     public static final double[] kClimb2AngleSP           = {-43.6, 71.1};
     public static final double[] kTrapAngleSP             = {-85, 51}; // Shoot Subwoofer with intake within bumper bounderies
-
+    public static final double[] kPassShot               ={0,35};
+    public static final double[] kForwardSubwooferShot   = {0,0};//Probably will need a sequential command. 
     public static final double kManualSpeed = 0.8;
   }
 

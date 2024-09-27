@@ -201,6 +201,13 @@ public class ArmSubsystem extends SubsystemBase {
           case SHOOT_HORIZONTAL:
             elbowAngle = ArmConstants.kHorizontalAngleSP[0];
             wristAngle = ArmConstants.kHorizontalAngleSP[1];
+          case FORWARD_SIGMA_SHOT:
+            elbowAngle = ArmConstants.kForwardSubwooferShot[0];
+            wristAngle = ArmConstants.kForwardSubwooferShot[1];
+          case PASS_SHOT:
+            elbowAngle = ArmConstants.kPassShot[0];
+            wristAngle = ArmConstants.kPassShot[1];
+          
             break;
           default:
             break;
